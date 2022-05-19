@@ -7,10 +7,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import javax.transaction.Transactional;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -61,15 +58,33 @@ public class RestController {
                                             schema = @Schema(implementation = String.class)
                                     )
                             }
+                    ),
+                    @APIResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.TEXT_PLAIN,
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
                     )
             })
-    public Response getFile(@PathParam("songId") String songId) {
+    public Response getFile(@PathParam("songId") long songId,@HeaderParam("ownerId") String ownerId) {
         SongService songService = new SongServiceImpl();
         Optional<Song> songOptional = songService.getSongById(songId);
+
         if(songOptional.isEmpty()){
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity("Song not found")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build();
+        }
+        if(!songService.isSongOwned(songId,ownerId)){
+            return Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity("Song not bought")
                     .type(MediaType.TEXT_PLAIN)
                     .build();
         }
