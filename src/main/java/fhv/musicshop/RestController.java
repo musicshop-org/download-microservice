@@ -27,7 +27,7 @@ public class RestController {
     @Transactional
     @GET
     @Path("/download/{songId}")
-    public Response getFile(@PathParam("songId") String songId) {
+    public Response getFile(@PathParam("songId") long songId) {
         Optional<Song> songOptional = Song.find("id",songId).firstResultOptional();
         if(songOptional.isEmpty()){
             return Response
