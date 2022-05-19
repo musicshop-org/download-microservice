@@ -13,9 +13,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Optional;
 
-@Path("/welcome")
+@Path("")
 public class RestController {
 
     @GET
@@ -37,10 +40,24 @@ public class RestController {
                     .build();
         }
 
+        URL resource = getClass().getClassLoader().getResource(songOptional.get().getFileName());
+        try {
+            File file = new File(resource.toURI());
+            Response.ResponseBuilder response = Response
+                    .status(Response.Status.OK)
+                    .entity(file)
+                    .type(MediaType.MEDIA_TYPE_WILDCARD);
+            response.header("Content-Disposition", "attachment; filename=\""+songOptional.get().getFileName()+"\"");
+
+            return response.build();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+
         return Response
-                .status(Response.Status.OK)
-                .entity(songOptional.get())
-                .type(MediaType.APPLICATION_JSON)
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("Internal Server Error")
+                .type(MediaType.TEXT_PLAIN)
                 .build();
     }
 }
