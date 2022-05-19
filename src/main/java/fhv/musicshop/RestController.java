@@ -63,8 +63,9 @@ public class RestController {
                             }
                     )
             })
-    public Response getFile(@PathParam("songId") long songId) {
-        Optional<Song> songOptional = Song.find("id",songId).firstResultOptional();
+    public Response getFile(@PathParam("songId") String songId) {
+        SongService songService = new SongServiceImpl();
+        Optional<Song> songOptional = songService.getSongById(songId);
         if(songOptional.isEmpty()){
             return Response
                     .status(Response.Status.NOT_FOUND)
