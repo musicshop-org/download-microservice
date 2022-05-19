@@ -30,6 +30,39 @@ public class RestController {
     @Transactional
     @GET
     @Path("/download/{songId}")
+    @APIResponses(
+            value = {
+                    @APIResponse(
+                            responseCode = "200",
+                            description = "Song download initiated",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.MEDIA_TYPE_WILDCARD,
+                                            schema = @Schema(implementation = byte.class)
+                                    )
+                            }
+                    ),
+                    @APIResponse(
+                            responseCode = "404",
+                            description = "Song not found",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.TEXT_PLAIN,
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
+                    ),
+                    @APIResponse(
+                            responseCode = "500",
+                            description = "Internal Server Error",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.TEXT_PLAIN,
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
+                    )
+            })
     public Response getFile(@PathParam("songId") long songId) {
         Optional<Song> songOptional = Song.find("id",songId).firstResultOptional();
         if(songOptional.isEmpty()){
