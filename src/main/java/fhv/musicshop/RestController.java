@@ -1,5 +1,6 @@
 package fhv.musicshop;
 
+import fhv.musicshop.domain.JwtManager;
 import fhv.musicshop.domain.Song;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -19,6 +20,7 @@ import java.util.Optional;
 public class RestController {
 
     @GET
+    @Path("/welcome")
     @Produces(MediaType.TEXT_PLAIN)
     public String hello() {
         return "Welcome to the download-microservice :)";
@@ -70,7 +72,18 @@ public class RestController {
                             }
                     )
             })
-    public Response getFile(@PathParam("songId") long songId,@HeaderParam("ownerId") String ownerId) {
+    public Response getFile(@PathParam("songId") long songId,
+                            @HeaderParam("ownerId") String ownerId,
+                            @HeaderParam("Authorization") String jwt)
+    {
+        if (null == jwt || !JwtManager.isValidToken(jwt)) {
+            return Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity("Json Webtoken is not valid")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build();
+        }
+
         SongService songService = new SongServiceImpl();
         Optional<Song> songOptional = songService.getSongById(songId);
 
