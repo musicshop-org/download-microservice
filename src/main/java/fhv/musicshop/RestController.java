@@ -1,6 +1,7 @@
 package fhv.musicshop;
 
 import fhv.musicshop.domain.JwtManager;
+import fhv.musicshop.domain.Role;
 import fhv.musicshop.domain.Song;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -14,6 +15,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 
 @Path("")
@@ -42,6 +44,26 @@ public class RestController {
                             }
                     ),
                     @APIResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.TEXT_PLAIN,
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
+                    ),
+                    @APIResponse(
+                            responseCode = "403",
+                            description = "No permission",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.TEXT_PLAIN,
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
+                    ),
+                    @APIResponse(
                             responseCode = "404",
                             description = "Song not found",
                             content = {
@@ -60,16 +82,6 @@ public class RestController {
                                             schema = @Schema(implementation = String.class)
                                     )
                             }
-                    ),
-                    @APIResponse(
-                            responseCode = "401",
-                            description = "Unauthorized",
-                            content = {
-                                    @Content(
-                                            mediaType = MediaType.TEXT_PLAIN,
-                                            schema = @Schema(implementation = String.class)
-                                    )
-                            }
                     )
             })
     public Response getFile(@PathParam("songId") long songId,
@@ -80,6 +92,14 @@ public class RestController {
             return Response
                     .status(Response.Status.UNAUTHORIZED)
                     .entity("Json Webtoken is not valid")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build();
+        }
+
+        if (!isCustomerOrLicensee(jwt)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity("No permission")
                     .type(MediaType.TEXT_PLAIN)
                     .build();
         }
@@ -121,5 +141,11 @@ public class RestController {
                 .entity("Internal Server Error")
                 .type(MediaType.TEXT_PLAIN)
                 .build();
+    }
+
+    private boolean isCustomerOrLicensee(String jwt_Token) {
+        List<Role> userRoles = JwtManager.getRoles(jwt_Token);
+
+        return userRoles.contains(Role.CUSTOMER) || userRoles.contains(Role.LICENSEE);
     }
 }

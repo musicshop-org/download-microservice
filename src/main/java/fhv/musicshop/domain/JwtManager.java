@@ -3,6 +3,9 @@ package fhv.musicshop.domain;
 import io.jsonwebtoken.*;
 
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import fhv.musicshop.domain.Role;
 
 public class JwtManager {
 
@@ -32,6 +35,18 @@ public class JwtManager {
         return Jwts.parser()
                 .setSigningKey(SECRET_KEY)
                 .parseClaimsJws(jwt).getBody();
+    }
+
+    public static List<Role> getRoles(String jwt) {
+        @SuppressWarnings("unchecked")
+        List<String> rolesString = getClaims(jwt).get("roles", List.class);
+        List<Role> roles = new LinkedList<>();
+
+        for (String role : rolesString) {
+            roles.add(Role.valueOf(role));
+        }
+
+        return roles;
     }
 
     public static boolean isValidToken(String jwt) {
