@@ -85,7 +85,6 @@ public class RestController {
                     )
             })
     public Response getFile(@PathParam("songId") long songId,
-                            @HeaderParam("ownerId") String ownerId,
                             @HeaderParam("Authorization") String jwt)
     {
         if (null == jwt || !JwtManager.isValidToken(jwt)) {
@@ -107,14 +106,17 @@ public class RestController {
         SongService songService = new SongServiceImpl();
         Optional<Song> songOptional = songService.getSongById(songId);
 
-        if(songOptional.isEmpty()){
+        if (songOptional.isEmpty()){
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity("Song not found")
                     .type(MediaType.TEXT_PLAIN)
                     .build();
         }
-        if(!songService.isSongOwned(songId,ownerId)){
+
+        String ownerId = JwtManager.getEmailAddress(jwt);
+
+        if (!songService.isSongOwned(songId,ownerId)){
             return Response
                     .status(Response.Status.UNAUTHORIZED)
                     .entity("Song not bought")
