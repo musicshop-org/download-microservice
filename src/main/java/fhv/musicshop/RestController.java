@@ -91,12 +91,12 @@ public class RestController {
         if (null == jwt || !JwtManager.isValidToken(jwt)) {
             return Response
                     .status(Response.Status.UNAUTHORIZED)
-                    .entity("Json Webtoken is not valid")
+                    .entity("Invalid jwt provided")
                     .type(MediaType.TEXT_PLAIN)
                     .build();
         }
 
-        if (!isCustomerOrLicensee(jwt)) {
+        if (!isCustomer(jwt)) {
             return Response
                     .status(Response.Status.FORBIDDEN)
                     .entity("No permission")
@@ -143,9 +143,9 @@ public class RestController {
                 .build();
     }
 
-    private boolean isCustomerOrLicensee(String jwt_Token) {
+    private boolean isCustomer(String jwt_Token) {
         List<Role> userRoles = JwtManager.getRoles(jwt_Token);
 
-        return userRoles.contains(Role.CUSTOMER) || userRoles.contains(Role.LICENSEE);
+        return userRoles.contains(Role.CUSTOMER);
     }
 }
