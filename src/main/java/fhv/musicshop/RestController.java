@@ -1,5 +1,7 @@
 package fhv.musicshop;
 
+import fhv.musicshop.domain.JwtManager;
+import fhv.musicshop.domain.Role;
 import fhv.musicshop.domain.Song;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -13,12 +15,14 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 
 @Path("")
 public class RestController {
 
     @GET
+    @Path("/welcome")
     @Produces(MediaType.TEXT_PLAIN)
     public String hello() {
         return "Welcome to the download-microservice :)";
@@ -36,6 +40,26 @@ public class RestController {
                                     @Content(
                                             mediaType = MediaType.MEDIA_TYPE_WILDCARD,
                                             schema = @Schema(implementation = byte.class)
+                                    )
+                            }
+                    ),
+                    @APIResponse(
+                            responseCode = "401",
+                            description = "Unauthorized",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.TEXT_PLAIN,
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
+                    ),
+                    @APIResponse(
+                            responseCode = "403",
+                            description = "No permission",
+                            content = {
+                                    @Content(
+                                            mediaType = MediaType.TEXT_PLAIN,
+                                            schema = @Schema(implementation = String.class)
                                     )
                             }
                     ),
@@ -58,30 +82,41 @@ public class RestController {
                                             schema = @Schema(implementation = String.class)
                                     )
                             }
-                    ),
-                    @APIResponse(
-                            responseCode = "401",
-                            description = "Unauthorized",
-                            content = {
-                                    @Content(
-                                            mediaType = MediaType.TEXT_PLAIN,
-                                            schema = @Schema(implementation = String.class)
-                                    )
-                            }
                     )
             })
-    public Response getFile(@PathParam("songId") long songId,@HeaderParam("ownerId") String ownerId) {
+    public Response getFile(@PathParam("songId") long songId,
+                            @HeaderParam("Authorization") String jwt)
+    {
+        if (null == jwt || !JwtManager.isValidToken(jwt)) {
+            return Response
+                    .status(Response.Status.UNAUTHORIZED)
+                    .entity("Invalid jwt provided")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build();
+        }
+
+        if (!isCustomer(jwt)) {
+            return Response
+                    .status(Response.Status.FORBIDDEN)
+                    .entity("No permission")
+                    .type(MediaType.TEXT_PLAIN)
+                    .build();
+        }
+
         SongService songService = new SongServiceImpl();
         Optional<Song> songOptional = songService.getSongById(songId);
 
-        if(songOptional.isEmpty()){
+        if (songOptional.isEmpty()){
             return Response
                     .status(Response.Status.NOT_FOUND)
                     .entity("Song not found")
                     .type(MediaType.TEXT_PLAIN)
                     .build();
         }
-        if(!songService.isSongOwned(songId,ownerId)){
+
+        String ownerId = JwtManager.getEmailAddress(jwt);
+
+        if (!songService.isSongOwned(songId,ownerId)){
             return Response
                     .status(Response.Status.UNAUTHORIZED)
                     .entity("Song not bought")
@@ -108,5 +143,11 @@ public class RestController {
                 .entity("Internal Server Error")
                 .type(MediaType.TEXT_PLAIN)
                 .build();
+    }
+
+    private boolean isCustomer(String jwt_Token) {
+        List<Role> userRoles = JwtManager.getRoles(jwt_Token);
+
+        return userRoles.contains(Role.CUSTOMER);
     }
 }
