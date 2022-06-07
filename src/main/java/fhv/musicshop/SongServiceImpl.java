@@ -16,7 +16,7 @@ public class SongServiceImpl implements SongService{
     @Override
     public boolean isSongOwned(long song, String ownerId) {
         ResteasyClient httpClient = new ResteasyClientBuilder().build();
-        String url = "http://localhost:9001/song/owned/"+song;
+        String url = "http://172.31.31.220/song/owned/"+song;
         Response response = httpClient.target(url).request().header("ownerId",ownerId).get();
 
         return response.readEntity(Boolean.class);
