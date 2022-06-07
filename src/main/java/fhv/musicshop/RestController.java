@@ -12,10 +12,7 @@ import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
@@ -128,17 +125,25 @@ public class RestController {
                     .build();
         }
 
-        //URL resource = getClass().getClassLoader().getResource(songOptional.get().getFileName());
+        URL resource = getClass().getClassLoader().getResource(songOptional.get().getFileName());
         try {
-            File file = new File(getClass().getResource(songOptional.get().getFileName()).toExternalForm());
+            InputStream is = getClass().getClassLoader().getResourceAsStream(songOptional.get().getFileName());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            int len;
+            byte[] buffer = new byte[4096];
+            while ((len = is.read(buffer, 0, buffer.length)) != -1) {
+                baos.write(buffer, 0, len);
+            }
             Response.ResponseBuilder response = Response
                     .status(Response.Status.OK)
-                    .entity(file)
-                    .type(MediaType.MEDIA_TYPE_WILDCARD);
+                    .entity(baos)
+                    .type(MediaType.APPLICATION_OCTET_STREAM);
             response.header("Content-Disposition", "attachment; filename=\""+songOptional.get().getFileName()+"\"");
 
             return response.build();
         } catch (NullPointerException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -167,7 +172,7 @@ public class RestController {
 
         try (FileOutputStream out = new FileOutputStream(tempFile)) {
             //copy stream
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[1024*8];
             int bytesRead;
             while ((bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
