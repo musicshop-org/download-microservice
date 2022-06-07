@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Path("")
@@ -129,7 +130,7 @@ public class RestController {
 
         //URL resource = getClass().getClassLoader().getResource(songOptional.get().getFileName());
         try {
-            File file = getResourceAsFile(songOptional.get().getFileName());
+            File file = new File(getClass().getResource(songOptional.get().getFileName()).toExternalForm());
             Response.ResponseBuilder response = Response
                     .status(Response.Status.OK)
                     .entity(file)
@@ -137,7 +138,7 @@ public class RestController {
             response.header("Content-Disposition", "attachment; filename=\""+songOptional.get().getFileName()+"\"");
 
             return response.build();
-        } catch (IOException e) {
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
