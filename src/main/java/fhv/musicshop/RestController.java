@@ -3,6 +3,7 @@ package fhv.musicshop;
 import fhv.musicshop.domain.JwtManager;
 import fhv.musicshop.domain.Role;
 import fhv.musicshop.domain.Song;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
@@ -130,15 +131,20 @@ public class RestController {
 
         //URL resource = getClass().getClassLoader().getResource(songOptional.get().getFileName());
         try {
-            File file = new File(getClass().getResource(songOptional.get().getFileName()).toExternalForm());
+
+            File targetFile = new File("src/main/resources/targetFile.tmp");
+
+            FileUtils.copyInputStreamToFile(getClass().getClassLoader().getResourceAsStream(songOptional.get().getFileName()), targetFile);
             Response.ResponseBuilder response = Response
                     .status(Response.Status.OK)
-                    .entity(file)
+                    .entity(targetFile)
                     .type(MediaType.MEDIA_TYPE_WILDCARD);
             response.header("Content-Disposition", "attachment; filename=\""+songOptional.get().getFileName()+"\"");
 
             return response.build();
         } catch (NullPointerException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
