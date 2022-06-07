@@ -13,6 +13,9 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
@@ -124,9 +127,9 @@ public class RestController {
                     .build();
         }
 
-        URL resource = getClass().getClassLoader().getResource(songOptional.get().getFileName());
+        //URL resource = getClass().getClassLoader().getResource(songOptional.get().getFileName());
         try {
-            File file = new File(resource.toURI());
+            File file = getResourceAsFile(songOptional.get().getFileName());
             Response.ResponseBuilder response = Response
                     .status(Response.Status.OK)
                     .entity(file)
@@ -134,7 +137,7 @@ public class RestController {
             response.header("Content-Disposition", "attachment; filename=\""+songOptional.get().getFileName()+"\"");
 
             return response.build();
-        } catch (URISyntaxException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -149,5 +152,27 @@ public class RestController {
         List<Role> userRoles = JwtManager.getRoles(jwt_Token);
 
         return userRoles.contains(Role.CUSTOMER);
+    }
+
+    private File getResourceAsFile(String resourcePath) throws IOException {
+
+        InputStream in = ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath);
+        if (in == null) {
+            return null;
+        }
+
+        File tempFile = File.createTempFile(String.valueOf(in.hashCode()), ".tmp");
+        tempFile.deleteOnExit();
+
+        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+            //copy stream
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+        }
+        return tempFile;
+
     }
 }
