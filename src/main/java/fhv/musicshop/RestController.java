@@ -4,10 +4,13 @@ import fhv.musicshop.domain.JwtManager;
 import fhv.musicshop.domain.Role;
 import fhv.musicshop.domain.Song;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
+import org.eclipse.microprofile.openapi.annotations.info.Info;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.eclipse.microprofile.openapi.annotations.servers.Server;
 
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
@@ -23,6 +26,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@OpenAPIDefinition(
+        info = @Info(
+                title = "OpenAPIDefinition",
+                description = "Download Microservice REST API",
+                version = "1.0.0"
+        ),
+        servers = {
+                @Server(
+                        url = "http://localhost:9000/",
+                        description = "Download Microservice REST"
+                )
+        }
+)
 @Path("")
 public class RestController {
 
@@ -161,25 +177,4 @@ public class RestController {
         return userRoles.contains(Role.CUSTOMER);
     }
 
-    private File getResourceAsFile(String resourcePath) throws IOException {
-
-        InputStream in = ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath);
-        if (in == null) {
-            return null;
-        }
-
-        File tempFile = File.createTempFile(String.valueOf(in.hashCode()), ".tmp");
-        tempFile.deleteOnExit();
-
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            //copy stream
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-            }
-        }
-        return tempFile;
-
-    }
 }
